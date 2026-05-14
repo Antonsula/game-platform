@@ -1,0 +1,37 @@
+import { useState } from 'react'
+import Sidebar        from './components/Sidebar'
+import Library        from './pages/Library'
+import TitleBar       from './components/TitleBar'
+import SnakeGame      from './games/snake/index'
+import BattleshipGame from './games/battleship/index'
+
+type View = 'library' | 'snake' | 'battleship'
+
+export default function App() {
+  const [activeView, setActiveView] = useState<View>('library')
+
+  function handlePlayBuiltIn(builtInId: string) {
+    if (builtInId === 'snake')      setActiveView('snake')
+    if (builtInId === 'battleship') setActiveView('battleship')
+  }
+
+  return (
+    <div className="flex flex-col h-screen bg-surface-800 text-white overflow-hidden">
+      <TitleBar />
+      <div className="flex flex-1 overflow-hidden">
+        <Sidebar activeView="library" onNavigate={v => setActiveView(v)} />
+        <main className="flex-1 overflow-hidden">
+          {activeView === 'library' && (
+            <Library onPlayBuiltIn={handlePlayBuiltIn} />
+          )}
+          {activeView === 'snake' && (
+            <SnakeGame onBack={() => setActiveView('library')} />
+          )}
+          {activeView === 'battleship' && (
+            <BattleshipGame onBack={() => setActiveView('library')} />
+          )}
+        </main>
+      </div>
+    </div>
+  )
+}
