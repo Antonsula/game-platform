@@ -34,35 +34,11 @@ export default function BattleshipIndex({ onBack }: Props) {
   const [phase,   setPhase]   = useState<Phase>({ name: 'menu' })
   const [overlay, setOverlay] = useState<TurnOverlay | null>(null)
 
-  // ── LAN: listen for peer board during "lan-waiting" phase ───────────────
-  useEffect(() => {
-    if (phase.name !== 'lan-waiting') return
-
-    const { role, myName, myBoard } = phase
-
-    window.api.net.onMessage((msg: any) => {
-      if (msg.type !== 'battle:board') return
-      const peerBoard = msg.board as Board
-      const peerName  = msg.playerName as string
-
-      window.api.net.offAll()
-
-      if (role === 'host') {
-        // host = p1 (white), goes first
-        setPhase({ name: 'lan-playing', role, myName, peerName, myBoard, peerBoard, gameKey: 0 })
-      } else {
-        // join = p2 (black), goes second
-        setPhase({ name: 'lan-playing', role, myName, peerName, myBoard, peerBoard, gameKey: 0 })
-      }
-    })
-
-    window.api.net.onDisconnect(() => {
-      window.api.net.offAll()
-      setPhase({ name: 'menu' })
-    })
-
-    return () => { window.api.net.offAll() }
-  }, [phase.name])
+  // NOTE: board-exchange listeners are registered in handleLanPlaced (see below),
+  // not in a useEffect. This avoids a race condition where the peer sends their
+  // board while we are still in 'lan-place' phase (before any useEffect for
+  // 'lan-waiting' has run). Event handlers are never double-invoked by React
+  // StrictMode, so registering there is safe.
 
   // ── Local helpers ─────────────────────────────────────────────────────────
   function startPlacement(mode: '1p' | '2p', p1Name: string, p2Name: string) {
@@ -105,9 +81,27 @@ export default function BattleshipIndex({ onBack }: Props) {
 
   function handleLanPlaced(board: Board) {
     const p = phase as Extract<Phase, { name: 'lan-place' }>
-    // Send our board to the peer, then wait for theirs
-    window.api.net.send({ type: 'battle:board', board, playerName: p.myName })
-    setPhase({ name: 'lan-waiting', role: p.role, myName: p.myName, myBoard: board })
+    const { role, myName } = p
+
+    // Register the listener BEFORE sending our board.
+    // If the peer clicked Ready first, their board message may arrive the moment
+    // we send ours — registering first ensures we never miss it.
+    window.api.net.offAll()
+    window.api.net.onMessage((msg: any) => {
+      if (msg.type !== 'battle:board') return
+      const peerBoard = msg.board as Board
+      const peerName  = msg.playerName as string
+      window.api.net.offAll()
+      setPhase({ name: 'lan-playing', role, myName, peerName, myBoard: board, peerBoard, gameKey: 0 })
+    })
+    window.api.net.onDisconnect(() => {
+      window.api.net.offAll()
+      setPhase({ name: 'menu' })
+    })
+
+    // Now send our board and show the waiting screen
+    window.api.net.send({ type: 'battle:board', board, playerName: myName })
+    setPhase({ name: 'lan-waiting', role, myName, myBoard: board })
   }
 
   // ── Render ────────────────────────────────────────────────────────────────
