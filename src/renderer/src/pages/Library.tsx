@@ -10,6 +10,8 @@ interface Props {
   onPlayBuiltIn?: (builtInId: string) => void
 }
 
+const READONLY = import.meta.env.VITE_READONLY === 'true'
+
 export default function Library({ onPlayBuiltIn }: Props) {
   const [games,       setGames]       = useState<Game[]>([])
   const [loading,     setLoading]     = useState(true)
@@ -114,18 +116,20 @@ export default function Library({ onPlayBuiltIn }: Props) {
             onQueryChange={setQuery}
             onGenreChange={setGenreFilter}
           />
-          <button
-            onClick={openAdd}
-            className="flex items-center gap-2 bg-accent hover:bg-accent-light px-4 py-2 rounded-lg
-              text-white text-sm font-semibold transition-colors shadow-lg shadow-accent/20 shrink-0 no-select"
-          >
-            <svg className="w-4 h-4" viewBox="0 0 20 20" fill="currentColor">
-              <path fillRule="evenodd"
-                d="M10 3a1 1 0 011 1v5h5a1 1 0 110 2h-5v5a1 1 0 11-2 0v-5H4a1 1 0 110-2h5V4a1 1 0 011-1z"
-                clipRule="evenodd" />
-            </svg>
-            Add Game
-          </button>
+          {!READONLY && (
+            <button
+              onClick={openAdd}
+              className="flex items-center gap-2 bg-accent hover:bg-accent-light px-4 py-2 rounded-lg
+                text-white text-sm font-semibold transition-colors shadow-lg shadow-accent/20 shrink-0 no-select"
+            >
+              <svg className="w-4 h-4" viewBox="0 0 20 20" fill="currentColor">
+                <path fillRule="evenodd"
+                  d="M10 3a1 1 0 011 1v5h5a1 1 0 110 2h-5v5a1 1 0 11-2 0v-5H4a1 1 0 110-2h5V4a1 1 0 011-1z"
+                  clipRule="evenodd" />
+              </svg>
+              Add Game
+            </button>
+          )}
         </div>
       </div>
 
@@ -157,9 +161,9 @@ export default function Library({ onPlayBuiltIn }: Props) {
       {/* Game grid */}
       <div className="flex-1 overflow-y-auto px-6 py-6">
         {games.length === 0 ? (
-          <EmptyState onAdd={openAdd} />
+          <EmptyState onAdd={READONLY ? undefined : openAdd} />
         ) : filtered.length === 0 ? (
-          <EmptyState onAdd={openAdd} isFiltered />
+          <EmptyState onAdd={READONLY ? undefined : openAdd} isFiltered />
         ) : (
           <div
             className="grid gap-4"
@@ -171,16 +175,16 @@ export default function Library({ onPlayBuiltIn }: Props) {
                 game={game}
                 style={{ animationDelay: `${i * 40}ms` }}
                 onPlay={()   => handlePlay(game.id)}
-                onEdit={()   => openEdit(game)}
-                onDelete={() => handleDelete(game.id)}
+                onEdit={READONLY ? undefined : () => openEdit(game)}
+                onDelete={READONLY ? undefined : () => handleDelete(game.id)}
               />
             ))}
           </div>
         )}
       </div>
 
-      {/* Add / Edit modal */}
-      {showModal && (
+      {/* Add / Edit modal — suppressed in play mode */}
+      {!READONLY && showModal && (
         <AddGameModal
           game={editingGame}
           onSave={handleSaved}

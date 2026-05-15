@@ -5,6 +5,7 @@
   "main": "out/main/index.js",
   "scripts": {
     "dev": "electron-vite dev",
+    "play": "electron-vite dev --mode play",
     "build": "electron-vite build",
     "preview": "electron-vite preview"
   },
