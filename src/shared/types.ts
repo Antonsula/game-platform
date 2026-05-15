@@ -22,6 +22,40 @@ export interface GamePayload {
   existingCoverPath?: string
 }
 
+// ---------------------------------------------------------------------------
+// Chess game types
+// ---------------------------------------------------------------------------
+
+export type ChessGameMode = '1v1' | 'vs-ai' | 'lan'
+export type ChessDifficulty = 'easy' | 'medium' | 'hard'
+export type ChessPieceColor = 'w' | 'b'
+
+export interface ChessStatsEntry {
+  id: string
+  playerName: string
+  opponentName: string
+  mode: ChessGameMode
+  playerColor: ChessPieceColor
+  result: 'win' | 'loss' | 'draw'
+  date: string
+}
+
+// ---------------------------------------------------------------------------
+// Flappy Bird types
+// ---------------------------------------------------------------------------
+
+export type FlappyDifficulty = 'easy' | 'medium' | 'hard'
+export type FlappyMode       = 'manual' | 'ai'
+
+export interface FlappyScoreEntry {
+  id:         string
+  playerName: string
+  score:      number
+  difficulty: FlappyDifficulty
+  mode:       FlappyMode
+  date:       string
+}
+
 export interface LaunchResult {
   success: boolean
   error?: string

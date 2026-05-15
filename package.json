@@ -8,6 +8,11 @@
     "build": "electron-vite build",
     "preview": "electron-vite preview"
   },
+  "dependencies": {
+    "@types/ws": "^8.18.1",
+    "chess.js": "^1.0.0",
+    "ws": "^8.20.1"
+  },
   "devDependencies": {
     "@electron-toolkit/preload": "^3.0.1",
     "@electron-toolkit/utils": "^3.0.0",

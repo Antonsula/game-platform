@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import BattleshipMenu    from './BattleshipMenu'
 import ShipPlacement     from './ShipPlacement'
 import TurnTransition    from './TurnTransition'
@@ -12,12 +12,18 @@ interface Props {
 
 type Phase =
   | { name: 'menu' }
-  | { name: 'placeP1'; mode: '1p' | '2p'; p1Name: string; p2Name: string }
-  | { name: 'transitionP2'; mode: '2p'; p1Name: string; p2Name: string; p1Board: Board }
-  | { name: 'placeP2'; mode: '2p'; p1Name: string; p2Name: string; p1Board: Board }
+  // ── Local modes ──────────────────────────────────────────────────────────
+  | { name: 'placeP1';       mode: '1p' | '2p'; p1Name: string; p2Name: string }
+  | { name: 'transitionP2';  mode: '2p';        p1Name: string; p2Name: string; p1Board: Board }
+  | { name: 'placeP2';       mode: '2p';        p1Name: string; p2Name: string; p1Board: Board }
   | { name: 'transitionStart'; mode: '1p' | '2p'; p1Name: string; p2Name: string; p1Board: Board; p2Board: Board; aiState: AIState | null }
-  | { name: 'playing'; mode: '1p' | '2p'; p1Name: string; p2Name: string; p1Board: Board; p2Board: Board; aiState: AIState | null; gameKey: number }
-  | { name: 'gameover'; winner: string; mode: '1p' | '2p'; p1Name: string; p2Name: string }
+  | { name: 'playing';       mode: '1p' | '2p'; p1Name: string; p2Name: string; p1Board: Board; p2Board: Board; aiState: AIState | null; gameKey: number }
+  | { name: 'gameover';      winner: string;    mode: '1p' | '2p'; p1Name: string; p2Name: string }
+  // ── LAN mode ─────────────────────────────────────────────────────────────
+  | { name: 'lan-place';   role: 'host' | 'join'; myName: string }
+  | { name: 'lan-waiting'; role: 'host' | 'join'; myName: string; myBoard: Board }
+  | { name: 'lan-playing'; role: 'host' | 'join'; myName: string; peerName: string; myBoard: Board; peerBoard: Board; gameKey: number }
+  | { name: 'lan-gameover'; myName: string; peerName: string; winnerName: string }
 
 interface TurnOverlay {
   nextPlayer: string
@@ -28,6 +34,37 @@ export default function BattleshipIndex({ onBack }: Props) {
   const [phase,   setPhase]   = useState<Phase>({ name: 'menu' })
   const [overlay, setOverlay] = useState<TurnOverlay | null>(null)
 
+  // ── LAN: listen for peer board during "lan-waiting" phase ───────────────
+  useEffect(() => {
+    if (phase.name !== 'lan-waiting') return
+
+    const { role, myName, myBoard } = phase
+
+    window.api.net.onMessage((msg: any) => {
+      if (msg.type !== 'battle:board') return
+      const peerBoard = msg.board as Board
+      const peerName  = msg.playerName as string
+
+      window.api.net.offAll()
+
+      if (role === 'host') {
+        // host = p1 (white), goes first
+        setPhase({ name: 'lan-playing', role, myName, peerName, myBoard, peerBoard, gameKey: 0 })
+      } else {
+        // join = p2 (black), goes second
+        setPhase({ name: 'lan-playing', role, myName, peerName, myBoard, peerBoard, gameKey: 0 })
+      }
+    })
+
+    window.api.net.onDisconnect(() => {
+      window.api.net.offAll()
+      setPhase({ name: 'menu' })
+    })
+
+    return () => { window.api.net.offAll() }
+  }, [phase.name])
+
+  // ── Local helpers ─────────────────────────────────────────────────────────
   function startPlacement(mode: '1p' | '2p', p1Name: string, p2Name: string) {
     setPhase({ name: 'placeP1', mode, p1Name, p2Name })
   }
@@ -56,10 +93,32 @@ export default function BattleshipIndex({ onBack }: Props) {
     setPhase({ name: 'gameover', winner, mode: p.mode, p1Name: p.p1Name, p2Name: p.p2Name })
   }
 
-  // --- Render ---
+  function handleLanGameOver(winnerName: string) {
+    const p = phase as Extract<Phase, { name: 'lan-playing' }>
+    setPhase({ name: 'lan-gameover', myName: p.myName, peerName: p.peerName, winnerName })
+  }
 
+  // ── LAN helpers ───────────────────────────────────────────────────────────
+  function handleLanStart(role: 'host' | 'join', myName: string) {
+    setPhase({ name: 'lan-place', role, myName })
+  }
+
+  function handleLanPlaced(board: Board) {
+    const p = phase as Extract<Phase, { name: 'lan-place' }>
+    // Send our board to the peer, then wait for theirs
+    window.api.net.send({ type: 'battle:board', board, playerName: p.myName })
+    setPhase({ name: 'lan-waiting', role: p.role, myName: p.myName, myBoard: board })
+  }
+
+  // ── Render ────────────────────────────────────────────────────────────────
   if (phase.name === 'menu') {
-    return <BattleshipMenu onStart={startPlacement} onBack={onBack} />
+    return (
+      <BattleshipMenu
+        onStart={startPlacement}
+        onStartLan={handleLanStart}
+        onBack={onBack}
+      />
+    )
   }
 
   if (phase.name === 'placeP1') {
@@ -120,10 +179,7 @@ export default function BattleshipIndex({ onBack }: Props) {
           onTransition={(nextPlayer, onReady) => {
             setOverlay({
               nextPlayer,
-              onReady: () => {
-                setOverlay(null)
-                onReady()
-              },
+              onReady: () => { setOverlay(null); onReady() },
             })
           }}
         />
@@ -157,6 +213,95 @@ export default function BattleshipIndex({ onBack }: Props) {
               text-sm font-medium transition-colors mb-3"
           >
             Main Menu
+          </button>
+          <button
+            onClick={onBack}
+            className="w-full bg-surface-600 hover:bg-surface-500 py-2.5 rounded-xl text-gray-400
+              text-sm transition-colors"
+          >
+            Back to Library
+          </button>
+        </div>
+      </div>
+    )
+  }
+
+  // ── LAN phases ────────────────────────────────────────────────────────────
+
+  if (phase.name === 'lan-place') {
+    const { myName } = phase
+    return (
+      <ShipPlacement
+        playerName={myName}
+        onDone={handleLanPlaced}
+        onBack={() => {
+          window.api.net.stop()
+          setPhase({ name: 'menu' })
+        }}
+      />
+    )
+  }
+
+  if (phase.name === 'lan-waiting') {
+    const { myName } = phase
+    return (
+      <div className="flex flex-col items-center justify-center h-full bg-surface-800 select-none">
+        <div className="w-full max-w-sm bg-surface-700 rounded-2xl p-8 shadow-2xl border border-white/5 text-center space-y-4">
+          <div className="text-4xl">⚓</div>
+          <h2 className="text-xl font-bold text-white">Fleet deployed, {myName}!</h2>
+          <p className="text-gray-400 text-sm animate-pulse">Waiting for opponent to finish placing ships…</p>
+          <button
+            onClick={() => { window.api.net.stop(); setPhase({ name: 'menu' }) }}
+            className="w-full bg-surface-600 hover:bg-surface-500 py-2.5 rounded-xl text-gray-400
+              text-sm transition-colors"
+          >
+            Cancel
+          </button>
+        </div>
+      </div>
+    )
+  }
+
+  if (phase.name === 'lan-playing') {
+    const { role, myName, peerName, myBoard, peerBoard, gameKey } = phase
+    // host = p1 (goes first), join = p2 (goes second)
+    const p1Board = role === 'host' ? myBoard  : peerBoard
+    const p2Board = role === 'host' ? peerBoard : myBoard
+    const p1Name  = role === 'host' ? myName   : peerName
+    const p2Name  = role === 'host' ? peerName  : myName
+    return (
+      <BattleshipGame
+        key={gameKey}
+        mode="lan"
+        p1Name={p1Name}
+        p2Name={p2Name}
+        p1Board={p1Board}
+        p2Board={p2Board}
+        lanRole={role}
+        onGameOver={handleLanGameOver}
+      />
+    )
+  }
+
+  if (phase.name === 'lan-gameover') {
+    const { myName, peerName, winnerName } = phase
+    const iWon = winnerName === myName
+    return (
+      <div className="flex flex-col items-center justify-center h-full bg-surface-800 select-none">
+        <div className="w-full max-w-sm bg-surface-700 rounded-2xl p-8 shadow-2xl border border-white/5 text-center space-y-4">
+          <div className="text-5xl">{iWon ? '🎉' : '💀'}</div>
+          <h2 className="text-3xl font-bold text-white">{winnerName} wins!</h2>
+          <p className="text-gray-400 text-sm">
+            {iWon
+              ? `You sank ${peerName}'s entire fleet!`
+              : `${peerName} sank your entire fleet.`}
+          </p>
+          <button
+            onClick={() => { window.api.net.stop(); setPhase({ name: 'menu' }) }}
+            className="w-full bg-accent hover:bg-accent-light py-3 rounded-xl text-white font-bold
+              text-sm transition-colors shadow-lg shadow-accent/20"
+          >
+            Back to Menu
           </button>
           <button
             onClick={onBack}

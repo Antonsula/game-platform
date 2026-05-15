@@ -6,10 +6,86 @@ import {
 } from 'electron'
 import { join, extname, dirname } from 'path'
 import { existsSync, mkdirSync, copyFileSync, readFileSync, writeFileSync } from 'fs'
+import { networkInterfaces } from 'os'
 import { spawn } from 'child_process'
 import { randomUUID } from 'crypto'
 import { is } from '@electron-toolkit/utils'
-import type { Game, GamePayload, LaunchResult, LeaderboardEntry } from '@shared/types'
+import WebSocket, { WebSocketServer } from 'ws'
+import type { Game, GamePayload, LaunchResult, LeaderboardEntry, ChessStatsEntry, FlappyScoreEntry } from '@shared/types'
+
+// ---------------------------------------------------------------------------
+// LAN network layer
+// ---------------------------------------------------------------------------
+
+let _netServer: WebSocketServer | null = null
+let _netPeer:   WebSocket | null = null
+let _mainWin:   BrowserWindow | null = null
+
+function getLanIp(): string {
+  for (const list of Object.values(networkInterfaces())) {
+    for (const addr of (list ?? [])) {
+      if (addr.family === 'IPv4' && !addr.internal) return addr.address
+    }
+  }
+  return '127.0.0.1'
+}
+
+function attachPeerHandlers(ws: WebSocket): void {
+  ws.on('message', data => {
+    try {
+      _mainWin?.webContents.send('net:message', JSON.parse(data.toString()))
+    } catch { /* malformed JSON — ignore */ }
+  })
+  ws.on('close', () => {
+    _netPeer = null
+    _mainWin?.webContents.send('net:peer-disconnected')
+  })
+}
+
+ipcMain.handle('net:host', (): Promise<{ ip: string; port: number }> => {
+  _netPeer?.close();  _netPeer  = null
+  _netServer?.close(); _netServer = null
+
+  return new Promise((resolve, reject) => {
+    const server = new WebSocketServer({ port: 0 })
+    server.once('error', reject)
+    server.once('listening', () => {
+      const { port } = server.address() as { port: number }
+      _netServer = server
+      server.on('connection', ws => {
+        _netPeer = ws
+        attachPeerHandlers(ws)
+        _mainWin?.webContents.send('net:peer-connected')
+      })
+      resolve({ ip: getLanIp(), port })
+    })
+  })
+})
+
+ipcMain.handle('net:join', (_e, ip: string, port: number): Promise<void> => {
+  _netPeer?.close(); _netPeer = null
+
+  return new Promise((resolve, reject) => {
+    const ws = new WebSocket(`ws://${ip}:${port}`)
+    ws.once('error', reject)
+    ws.once('open', () => {
+      _netPeer = ws
+      attachPeerHandlers(ws)
+      resolve()
+    })
+  })
+})
+
+ipcMain.handle('net:send', (_e, msg: unknown): void => {
+  if (_netPeer?.readyState === WebSocket.OPEN) {
+    _netPeer.send(JSON.stringify(msg))
+  }
+})
+
+ipcMain.handle('net:stop', (): void => {
+  _netPeer?.close();   _netPeer  = null
+  _netServer?.close(); _netServer = null
+})
 
 // ---------------------------------------------------------------------------
 // Games store — plain JSON in %APPDATA%\game-platform\games.json
@@ -119,7 +195,83 @@ function seedBuiltInGames(): void {
     changed = true
   }
 
+  if (!games.some(g => g.executablePath === 'builtin://chess')) {
+    const chess: Game = {
+      id:             'builtin-chess',
+      title:          'Chess',
+      description:    'Classic strategy game with full rules, local 1v1, and a built-in AI opponent named Chess-master.',
+      executablePath: 'builtin://chess',
+      genre:          'Strategy',
+      coverPath:      '',
+      addedAt:        new Date().toISOString(),
+      lastPlayed:     null,
+    }
+    const battleshipIdx = games.findIndex(g => g.executablePath === 'builtin://battleship')
+    if (battleshipIdx >= 0) {
+      games = [...games.slice(0, battleshipIdx + 1), chess, ...games.slice(battleshipIdx + 1)]
+    } else {
+      games = [...games, chess]
+    }
+    changed = true
+  }
+
+  if (!games.some(g => g.executablePath === 'builtin://flappy')) {
+    const flappy: Game = {
+      id:             'builtin-flappy',
+      title:          'Flappy Bird',
+      description:    'Classic tap-to-fly game. Dodge the pipes, beat your high score, or watch the AI show you how it\'s done.',
+      executablePath: 'builtin://flappy',
+      genre:          'Arcade',
+      coverPath:      '',
+      addedAt:        new Date().toISOString(),
+      lastPlayed:     null,
+    }
+    const chessIdx = games.findIndex(g => g.executablePath === 'builtin://chess')
+    if (chessIdx >= 0) {
+      games = [...games.slice(0, chessIdx + 1), flappy, ...games.slice(chessIdx + 1)]
+    } else {
+      games = [...games, flappy]
+    }
+    changed = true
+  }
+
   if (changed) writeGames(games)
+}
+
+// ---------------------------------------------------------------------------
+// Chess stats store — %APPDATA%\game-platform\chess-stats.json
+// ---------------------------------------------------------------------------
+
+function chessStatsPath(): string {
+  return join(app.getPath('userData'), 'chess-stats.json')
+}
+
+function readChessStats(): ChessStatsEntry[] {
+  const p = chessStatsPath()
+  if (!existsSync(p)) return []
+  try { return JSON.parse(readFileSync(p, 'utf-8')) as ChessStatsEntry[] } catch { return [] }
+}
+
+function writeChessStats(entries: ChessStatsEntry[]): void {
+  writeFileSync(chessStatsPath(), JSON.stringify(entries, null, 2), 'utf-8')
+}
+
+// ---------------------------------------------------------------------------
+// Flappy Bird scores store — %APPDATA%\game-platform\flappy-scores.json
+// ---------------------------------------------------------------------------
+
+function flappyScoresPath(): string {
+  return join(app.getPath('userData'), 'flappy-scores.json')
+}
+
+function readFlappyScores(): FlappyScoreEntry[] {
+  const p = flappyScoresPath()
+  if (!existsSync(p)) return []
+  try { return JSON.parse(readFileSync(p, 'utf-8')) as FlappyScoreEntry[] } catch { return [] }
+}
+
+function writeFlappyScores(entries: FlappyScoreEntry[]): void {
+  writeFileSync(flappyScoresPath(), JSON.stringify(entries, null, 2), 'utf-8')
 }
 
 // ---------------------------------------------------------------------------
@@ -144,6 +296,7 @@ function createWindow(): void {
     },
   })
 
+  _mainWin = win
   win.on('ready-to-show', () => win.show())
 
   if (is.dev && process.env['ELECTRON_RENDERER_URL']) {
@@ -304,5 +457,39 @@ ipcMain.handle(
   (_e, entry: Omit<LeaderboardEntry, 'id'>): void => {
     const entries = readLeaderboard()
     writeLeaderboard([...entries, { ...entry, id: randomUUID() }])
+  },
+)
+
+// ---------------------------------------------------------------------------
+// Chess stats IPC
+// ---------------------------------------------------------------------------
+
+ipcMain.handle('chess-stats:getAll', (): ChessStatsEntry[] => readChessStats())
+
+ipcMain.handle(
+  'chess-stats:add',
+  (_e, entry: Omit<ChessStatsEntry, 'id'>): void => {
+    const entries = readChessStats()
+    writeChessStats([...entries, { ...entry, id: randomUUID() }])
+  },
+)
+
+// ---------------------------------------------------------------------------
+// Flappy Bird scores IPC
+// ---------------------------------------------------------------------------
+
+ipcMain.handle('flappy-scores:getAll', (): FlappyScoreEntry[] =>
+  readFlappyScores().sort((a, b) =>
+    b.score !== a.score
+      ? b.score - a.score
+      : new Date(b.date).getTime() - new Date(a.date).getTime()
+  )
+)
+
+ipcMain.handle(
+  'flappy-scores:add',
+  (_e, entry: Omit<FlappyScoreEntry, 'id'>): void => {
+    const entries = readFlappyScores()
+    writeFlappyScores([...entries, { ...entry, id: randomUUID() }])
   },
 )

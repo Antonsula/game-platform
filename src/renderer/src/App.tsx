@@ -4,8 +4,10 @@ import Library        from './pages/Library'
 import TitleBar       from './components/TitleBar'
 import SnakeGame      from './games/snake/index'
 import BattleshipGame from './games/battleship/index'
+import ChessGame      from './games/chess/index'
+import FlappyGame     from './games/flappy/index'
 
-type View = 'library' | 'snake' | 'battleship'
+type View = 'library' | 'snake' | 'battleship' | 'chess' | 'flappy'
 
 export default function App() {
   const [activeView, setActiveView] = useState<View>('library')
@@ -13,6 +15,8 @@ export default function App() {
   function handlePlayBuiltIn(builtInId: string) {
     if (builtInId === 'snake')      setActiveView('snake')
     if (builtInId === 'battleship') setActiveView('battleship')
+    if (builtInId === 'chess')      setActiveView('chess')
+    if (builtInId === 'flappy')     setActiveView('flappy')
   }
 
   return (
@@ -29,6 +33,12 @@ export default function App() {
           )}
           {activeView === 'battleship' && (
             <BattleshipGame onBack={() => setActiveView('library')} />
+          )}
+          {activeView === 'chess' && (
+            <ChessGame onBack={() => setActiveView('library')} />
+          )}
+          {activeView === 'flappy' && (
+            <FlappyGame onBack={() => setActiveView('library')} />
           )}
         </main>
       </div>
