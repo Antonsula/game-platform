@@ -1,0 +1,70 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 160 213">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#060e1a"/>
+      <stop offset="100%" stop-color="#020810"/>
+    </linearGradient>
+    <linearGradient id="sea" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#0c4a6e"/>
+      <stop offset="100%" stop-color="#082f45"/>
+    </linearGradient>
+  </defs>
+  <rect width="160" height="213" fill="url(#bg)"/>
+
+  <!-- Sea -->
+  <rect x="0" y="120" width="160" height="93" fill="url(#sea)" opacity="0.6"/>
+
+  <!-- Grid -->
+  <g stroke="#0e3a52" stroke-width="1" opacity="0.5">
+    <line x1="20" y1="30" x2="20" y2="115"/>
+    <line x1="35" y1="30" x2="35" y2="115"/>
+    <line x1="50" y1="30" x2="50" y2="115"/>
+    <line x1="65" y1="30" x2="65" y2="115"/>
+    <line x1="80" y1="30" x2="80" y2="115"/>
+    <line x1="95" y1="30" x2="95" y2="115"/>
+    <line x1="110" y1="30" x2="110" y2="115"/>
+    <line x1="125" y1="30" x2="125" y2="115"/>
+    <line x1="140" y1="30" x2="140" y2="115"/>
+    <line x1="20" y1="30"  x2="140" y2="30"/>
+    <line x1="20" y1="45"  x2="140" y2="45"/>
+    <line x1="20" y1="60"  x2="140" y2="60"/>
+    <line x1="20" y1="75"  x2="140" y2="75"/>
+    <line x1="20" y1="90"  x2="140" y2="90"/>
+    <line x1="20" y1="105" x2="140" y2="105"/>
+  </g>
+
+  <!-- Hit markers -->
+  <circle cx="27" cy="52" r="5" fill="#ef4444" opacity="0.9"/>
+  <circle cx="42" cy="52" r="5" fill="#ef4444" opacity="0.9"/>
+  <circle cx="72" cy="82" r="4" fill="#60a5fa" opacity="0.7" stroke="#3b82f6" stroke-width="1"/>
+  <circle cx="102" cy="37" r="4" fill="#60a5fa" opacity="0.7" stroke="#3b82f6" stroke-width="1"/>
+
+  <!-- Ship (horizontal, 4-segment) highlighted -->
+  <rect x="22" y="46" width="58" height="13" rx="3" fill="#1e40af" opacity="0.9" stroke="#3b82f6" stroke-width="1"/>
+  <!-- Hit on ship -->
+  <circle cx="27" cy="52" r="5" fill="#ef4444" opacity="0.9"/>
+  <circle cx="42" cy="52" r="5" fill="#ef4444" opacity="0.9"/>
+
+  <!-- Battleship silhouette on sea -->
+  <g transform="translate(20,112)">
+    <!-- Hull -->
+    <path d="M10 18 L110 18 L120 8 L100 8 L95 0 L55 0 L50 8 L20 8 Z" fill="#1e3a5f"/>
+    <!-- Superstructure -->
+    <rect x="45" y="-12" width="35" height="13" rx="2" fill="#1e4a6e"/>
+    <!-- Gun barrel -->
+    <rect x="60" y="-18" width="28" height="5" rx="2" fill="#164e63"/>
+    <!-- Bridge -->
+    <rect x="55" y="-24" width="18" height="14" rx="2" fill="#1e4a6e"/>
+    <!-- Mast -->
+    <rect x="63" y="-34" width="2" height="12" fill="#0c4a6e"/>
+    <!-- Wake lines -->
+    <path d="M5 22 Q15 26 25 22" stroke="#60a5fa" stroke-width="1.5" fill="none" opacity="0.5"/>
+    <path d="M95 22 Q105 26 115 22" stroke="#60a5fa" stroke-width="1.5" fill="none" opacity="0.5"/>
+  </g>
+
+  <!-- Title -->
+  <text x="80" y="178" font-family="system-ui,sans-serif" font-size="14" font-weight="700"
+        fill="#38bdf8" text-anchor="middle" letter-spacing="1">BATTLESHIP</text>
+  <text x="80" y="196" font-family="system-ui,sans-serif" font-size="10"
+        fill="#075985" text-anchor="middle" letter-spacing="1">STRATEGY</text>
+</svg>

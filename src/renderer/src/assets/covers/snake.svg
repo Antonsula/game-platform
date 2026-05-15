@@ -1,0 +1,77 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 160 213">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#0d1f0d"/>
+      <stop offset="100%" stop-color="#0a0f0a"/>
+    </linearGradient>
+  </defs>
+  <rect width="160" height="213" fill="url(#bg)"/>
+
+  <!-- Grid dots -->
+  <g fill="#1a2e1a" opacity="0.8">
+    <rect x="12" y="12" width="3" height="3" rx="1"/>
+    <rect x="24" y="12" width="3" height="3" rx="1"/>
+    <rect x="36" y="12" width="3" height="3" rx="1"/>
+    <rect x="48" y="12" width="3" height="3" rx="1"/>
+    <rect x="60" y="12" width="3" height="3" rx="1"/>
+    <rect x="72" y="12" width="3" height="3" rx="1"/>
+    <rect x="84" y="12" width="3" height="3" rx="1"/>
+    <rect x="96" y="12" width="3" height="3" rx="1"/>
+    <rect x="108" y="12" width="3" height="3" rx="1"/>
+    <rect x="120" y="12" width="3" height="3" rx="1"/>
+    <rect x="132" y="12" width="3" height="3" rx="1"/>
+    <rect x="144" y="12" width="3" height="3" rx="1"/>
+    <rect x="12" y="24" width="3" height="3" rx="1"/>
+    <rect x="24" y="24" width="3" height="3" rx="1"/>
+    <rect x="36" y="24" width="3" height="3" rx="1"/>
+    <rect x="48" y="24" width="3" height="3" rx="1"/>
+    <rect x="60" y="24" width="3" height="3" rx="1"/>
+    <rect x="72" y="24" width="3" height="3" rx="1"/>
+    <rect x="84" y="24" width="3" height="3" rx="1"/>
+    <rect x="96" y="24" width="3" height="3" rx="1"/>
+    <rect x="108" y="24" width="3" height="3" rx="1"/>
+    <rect x="120" y="24" width="3" height="3" rx="1"/>
+    <rect x="132" y="24" width="3" height="3" rx="1"/>
+    <rect x="144" y="24" width="3" height="3" rx="1"/>
+  </g>
+
+  <!-- Snake body — S-curve path of segments -->
+  <g fill="#22c55e" rx="3">
+    <!-- Head row (right side) -->
+    <rect x="96"  y="60" width="14" height="14" rx="3"/>
+    <rect x="112" y="60" width="14" height="14" rx="3"/>
+    <rect x="128" y="60" width="14" height="14" rx="3"/>
+    <!-- Turn down -->
+    <rect x="128" y="76" width="14" height="14" rx="3"/>
+    <rect x="128" y="92" width="14" height="14" rx="3"/>
+    <!-- Row left -->
+    <rect x="112" y="92" width="14" height="14" rx="3"/>
+    <rect x="96"  y="92" width="14" height="14" rx="3"/>
+    <rect x="80"  y="92" width="14" height="14" rx="3"/>
+    <rect x="64"  y="92" width="14" height="14" rx="3"/>
+    <rect x="48"  y="92" width="14" height="14" rx="3"/>
+    <!-- Turn down -->
+    <rect x="48"  y="108" width="14" height="14" rx="3"/>
+    <rect x="48"  y="124" width="14" height="14" rx="3"/>
+    <!-- Row right -->
+    <rect x="64"  y="124" width="14" height="14" rx="3"/>
+    <rect x="80"  y="124" width="14" height="14" rx="3"/>
+    <rect x="96"  y="124" width="14" height="14" rx="3"/>
+    <rect x="112" y="124" width="14" height="14" rx="3"/>
+  </g>
+  <!-- Head highlight -->
+  <rect x="96" y="60" width="14" height="14" rx="3" fill="#4ade80"/>
+  <!-- Eyes -->
+  <rect x="100" y="64" width="3" height="3" rx="1" fill="#0a0f0a"/>
+  <rect x="106" y="64" width="3" height="3" rx="1" fill="#0a0f0a"/>
+
+  <!-- Food (apple) -->
+  <rect x="48" y="60" width="14" height="14" rx="7" fill="#ef4444"/>
+  <rect x="54" y="56" width="2" height="5" rx="1" fill="#16a34a"/>
+
+  <!-- Title -->
+  <text x="80" y="178" font-family="system-ui,sans-serif" font-size="22" font-weight="700"
+        fill="#22c55e" text-anchor="middle" letter-spacing="2">SNAKE</text>
+  <text x="80" y="196" font-family="system-ui,sans-serif" font-size="10"
+        fill="#166534" text-anchor="middle" letter-spacing="1">ARCADE</text>
+</svg>

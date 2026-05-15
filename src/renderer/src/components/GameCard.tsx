@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import type { Game } from '@shared/types'
+import { BUILTIN_COVERS } from '../assets/covers'
 
 interface Props {
   game: Game
@@ -37,7 +38,12 @@ export default function GameCard({ game, onPlay, onEdit, onDelete, style }: Prop
     setTimeout(() => setLaunching(false), 1500)
   }
 
-  const hasCover = game.coverPath && !imgError
+  // Prefer: 1) user-supplied cover  2) bundled built-in cover  3) placeholder
+  const builtinCover = BUILTIN_COVERS[game.executablePath]
+  const hasCover     = (game.coverPath && !imgError) || !!builtinCover
+  const coverSrc     = (game.coverPath && !imgError)
+    ? toFileUrl(game.coverPath)
+    : builtinCover
 
   return (
     <div
@@ -48,7 +54,7 @@ export default function GameCard({ game, onPlay, onEdit, onDelete, style }: Prop
       <div className="relative w-full aspect-[3/4] bg-surface-600 overflow-hidden">
         {hasCover ? (
           <img
-            src={toFileUrl(game.coverPath)}
+            src={coverSrc}
             alt={game.title}
             className="w-full h-full object-cover"
             onError={() => setImgError(true)}
