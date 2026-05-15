@@ -304,7 +304,7 @@ export default function BattleshipIndex({ onBack }: Props) {
             Back to Menu
           </button>
           <button
-            onClick={onBack}
+            onClick={() => { window.api.net.stop(); onBack() }}
             className="w-full bg-surface-600 hover:bg-surface-500 py-2.5 rounded-xl text-gray-400
               text-sm transition-colors"
           >

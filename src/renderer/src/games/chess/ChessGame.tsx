@@ -110,7 +110,13 @@ interface Props {
   onBack:    () => void
 }
 
-export default function ChessGame({ config, onMenu, onBack }: Props) {
+function stopLan() { window.api.net.offAll(); window.api.net.stop() }
+
+export default function ChessGame({ config, onMenu: _onMenu, onBack: _onBack }: Props) {
+  // Wrap navigation so the LAN WebSocket is torn down when leaving the game.
+  // (Using config.mode directly — isLan is declared further down the function.)
+  const onMenu = () => { if (config.mode === 'lan') stopLan(); _onMenu() }
+  const onBack = () => { if (config.mode === 'lan') stopLan(); _onBack() }
   const chessRef   = useRef(new Chess())
   const [fen,      setFen]      = useState(chessRef.current.fen())
   const [lastMove, setLastMove] = useState<{ from: Square; to: Square } | null>(null)
@@ -217,10 +223,10 @@ export default function ChessGame({ config, onMenu, onBack }: Props) {
       setGameOver({ text: 'Opponent disconnected.', winner: config.humanColor })
     })
 
-    return () => {
-      window.api.net.offAll()
-      window.api.net.stop()
-    }
+    // Only remove listeners on cleanup — never call stop() here.
+    // React StrictMode runs cleanup+effect twice on mount; stop() would close
+    // the live WebSocket before the second effect re-registers the handlers.
+    return () => { window.api.net.offAll() }
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isLan])
 

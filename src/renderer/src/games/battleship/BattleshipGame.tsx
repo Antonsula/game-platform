@@ -94,8 +94,11 @@ export default function BattleshipGame({
     })
 
     return () => {
+      // Only remove listeners here — do NOT call stop().
+      // React StrictMode runs cleanup+remount once in dev, and calling stop()
+      // would close the live WebSocket before the second mount re-registers handlers.
+      // stop() is called explicitly when the user navigates away (lan-gameover buttons).
       window.api.net.offAll()
-      window.api.net.stop()
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [mode, lanRole])
