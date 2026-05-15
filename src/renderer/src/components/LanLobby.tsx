@@ -48,6 +48,7 @@ export default function LanLobby({ gameName, onConnected, onCancel }: Props) {
   // ── Join ──────────────────────────────────────────────────────────────────
   async function startJoin() {
     setError('')
+    cancelledRef.current = false
     const trimmed = joinInput.trim()
     const match   = trimmed.match(/^(.+):(\d+)$/)
     if (!match) { setError('Enter address as  IP : PORT  (e.g. 192.168.1.5:51234)'); return }
