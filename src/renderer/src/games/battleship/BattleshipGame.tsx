@@ -118,7 +118,14 @@ export default function BattleshipGame({
     else if (result.result === 'hit')  addLog(`${p1Name} hit at ${coord}!`, 'hit')
     else                               addLog(`${p1Name} missed at ${coord}.`, 'miss')
 
-    if (result.won) { onGameOver(p1Name); return }
+    if (result.won) {
+      // In LAN mode send the winning shot BEFORE calling onGameOver, so the
+      // peer receives it and their onMessage handler can trigger their own
+      // game-over screen (showing them as the loser).
+      if (mode === 'lan') window.api.net.send({ type: 'battle:shot', row, col })
+      onGameOver(p1Name)
+      return
+    }
 
     if (mode === 'lan') {
       // Send shot to peer; wait for their turn
@@ -169,7 +176,11 @@ export default function BattleshipGame({
     else if (result.result === 'hit')  addLog(`${p2Name} hit at ${coord}!`, 'hit')
     else                               addLog(`${p2Name} missed at ${coord}.`, 'miss')
 
-    if (result.won) { onGameOver(p2Name); return }
+    if (result.won) {
+      if (mode === 'lan') window.api.net.send({ type: 'battle:shot', row, col })
+      onGameOver(p2Name)
+      return
+    }
 
     if (mode === 'lan') {
       window.api.net.send({ type: 'battle:shot', row, col })
