@@ -235,6 +235,26 @@ function seedBuiltInGames(): void {
     changed = true
   }
 
+  if (!games.some(g => g.executablePath === 'builtin://hangman')) {
+    const hangman: Game = {
+      id:             'builtin-hangman',
+      title:          'Hangman',
+      description:    'Classic word-guessing game. One player picks a secret word, the other guesses letters. Play LAN with a friend!',
+      executablePath: 'builtin://hangman',
+      genre:          'Word',
+      coverPath:      '',
+      addedAt:        new Date().toISOString(),
+      lastPlayed:     null,
+    }
+    const flappyIdx = games.findIndex(g => g.executablePath === 'builtin://flappy')
+    if (flappyIdx >= 0) {
+      games = [...games.slice(0, flappyIdx + 1), hangman, ...games.slice(flappyIdx + 1)]
+    } else {
+      games = [...games, hangman]
+    }
+    changed = true
+  }
+
   if (changed) writeGames(games)
 }
 

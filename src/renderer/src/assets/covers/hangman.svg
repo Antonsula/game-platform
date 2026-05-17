@@ -1,0 +1,92 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 160 213">
+  <defs>
+    <linearGradient id="hbg" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#0d0a1a"/>
+      <stop offset="100%" stop-color="#060410"/>
+    </linearGradient>
+    <linearGradient id="hglow" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#facc15" stop-opacity="0.15"/>
+      <stop offset="100%" stop-color="#facc15" stop-opacity="0"/>
+    </linearGradient>
+  </defs>
+
+  <!-- Background -->
+  <rect width="160" height="213" fill="url(#hbg)"/>
+
+  <!-- Faded alphabet letters scattered in background -->
+  <g font-family="system-ui,monospace" fill="#ffffff" opacity="0.04" font-size="18" font-weight="700">
+    <text x="5"   y="25">A</text>
+    <text x="130" y="20">Z</text>
+    <text x="20"  y="55">R</text>
+    <text x="115" y="48">M</text>
+    <text x="5"   y="80">P</text>
+    <text x="138" y="75">E</text>
+    <text x="12"  y="108">W</text>
+    <text x="130" y="100">S</text>
+    <text x="3"   y="135">T</text>
+    <text x="138" y="130">L</text>
+    <text x="10"  y="160">B</text>
+    <text x="128" y="158">C</text>
+    <text x="50"  y="12">X</text>
+    <text x="95"  y="20">K</text>
+    <text x="60"  y="175">J</text>
+    <text x="88"  y="175">Q</text>
+  </g>
+
+  <!-- Gallows structure -->
+  <g stroke="#6b7280" stroke-width="3" fill="none" stroke-linecap="round">
+    <!-- Base -->
+    <line x1="20" y1="148" x2="140" y2="148"/>
+    <!-- Vertical post -->
+    <line x1="50" y1="148" x2="50" y2="22"/>
+    <!-- Diagonal brace -->
+    <line x1="50" y1="48" x2="78" y2="22"/>
+    <!-- Horizontal beam -->
+    <line x1="50" y1="22" x2="110" y2="22"/>
+    <!-- Rope -->
+    <line x1="110" y1="22" x2="110" y2="38"/>
+  </g>
+
+  <!-- Hanged figure (partial — 4 wrong guesses shown) -->
+  <g stroke="#9ca3af" stroke-width="2.5" fill="none" stroke-linecap="round">
+    <!-- Head -->
+    <circle cx="110" cy="48" r="10"/>
+    <!-- Body -->
+    <line x1="110" y1="58" x2="110" y2="92"/>
+    <!-- Left arm -->
+    <line x1="110" y1="68" x2="92"  y2="82"/>
+    <!-- Right arm -->
+    <line x1="110" y1="68" x2="128" y2="82"/>
+  </g>
+
+  <!-- Word display: H _ N G M _ N -->
+  <g font-family="monospace,system-ui" font-size="11" font-weight="700" text-anchor="middle">
+    <!-- Letters and blanks -->
+    <text x="18"  y="170" fill="#facc15">H</text>
+    <text x="33"  y="170" fill="#64748b">_</text>
+    <text x="48"  y="170" fill="#facc15">N</text>
+    <text x="63"  y="170" fill="#facc15">G</text>
+    <text x="78"  y="170" fill="#facc15">M</text>
+    <text x="93"  y="170" fill="#64748b">_</text>
+    <text x="108" y="170" fill="#facc15">N</text>
+    <!-- Underlines -->
+    <g stroke="#475569" stroke-width="1.2">
+      <line x1="11" y1="172" x2="25" y2="172"/>
+      <line x1="26" y1="172" x2="40" y2="172"/>
+      <line x1="41" y1="172" x2="55" y2="172"/>
+      <line x1="56" y1="172" x2="70" y2="172"/>
+      <line x1="71" y1="172" x2="85" y2="172"/>
+      <line x1="86" y1="172" x2="100" y2="172"/>
+      <line x1="101" y1="172" x2="115" y2="172"/>
+    </g>
+  </g>
+
+  <!-- Glow accent under word -->
+  <rect x="5" y="162" width="150" height="18" rx="3" fill="url(#hglow)" opacity="0.6"/>
+
+  <!-- Title -->
+  <text x="80" y="193" font-family="system-ui,sans-serif" font-size="14" font-weight="700"
+        fill="#facc15" text-anchor="middle" letter-spacing="2">HANGMAN</text>
+  <text x="80" y="208" font-family="system-ui,sans-serif" font-size="9"
+        fill="#451a03" text-anchor="middle" letter-spacing="2">WORD GAME</text>
+</svg>
