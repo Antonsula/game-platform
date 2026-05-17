@@ -14,13 +14,18 @@ export default function LanLobby({ gameName, onConnected, onCancel }: Props) {
   const [joinInput,  setJoinInput]  = useState('')        // typed by joiner
   const [error,      setError]      = useState('')
   const [busy,       setBusy]       = useState(false)
-  const cancelledRef = useRef(false)
+  const cancelledRef  = useRef(false)
+  const connectedRef  = useRef(false)   // true once onConnected has been called
 
-  // Clean up on unmount
+  // Clean up on unmount — but only wipe listeners if we never successfully
+  // connected. After a successful connection the game component has already
+  // registered its own listeners; calling offAll() here would remove them.
   useEffect(() => {
     return () => {
       cancelledRef.current = true
-      window.api.net.offAll()
+      if (!connectedRef.current) {
+        window.api.net.offAll()
+      }
     }
   }, [])
 
@@ -36,6 +41,7 @@ export default function LanLobby({ gameName, onConnected, onCancel }: Props) {
 
       window.api.net.onPeerConnect(() => {
         if (cancelledRef.current) return
+        connectedRef.current = true
         window.api.net.offAll()
         onConnected('host')
       })
@@ -59,6 +65,7 @@ export default function LanLobby({ gameName, onConnected, onCancel }: Props) {
     try {
       await window.api.net.join(ip, port)
       if (cancelledRef.current) return
+      connectedRef.current = true
       window.api.net.offAll()
       onConnected('join')
     } catch (e) {
