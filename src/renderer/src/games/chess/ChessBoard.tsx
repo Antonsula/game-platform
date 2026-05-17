@@ -125,8 +125,14 @@ export default function ChessBoard({
           // Cancel premove selection
           setPremoveFrom(null)
         } else {
-          // Commit the premove (from → to)
-          onPremoveChange?.({ from: premoveFrom, to: sq })
+          // Support "click own rook to castle" in premove mode
+          const selPiece = chess.get(premoveFrom)
+          if (selPiece?.type === 'k' && piece?.type === 'r' && piece.color === humanColor) {
+            const castleDest = ((sq[0] === 'h' ? 'g' : 'c') + sq[1]) as Square
+            onPremoveChange?.({ from: premoveFrom, to: castleDest })
+          } else {
+            onPremoveChange?.({ from: premoveFrom, to: sq })
+          }
           setPremoveFrom(null)
         }
       } else {
@@ -157,6 +163,17 @@ export default function ChessBoard({
           setDests(new Set())
         }
       } else if (piece && piece.color === currentTurn) {
+        // Support "click own rook to castle" when king is selected
+        const selPiece = chess.get(selected)
+        if (selPiece?.type === 'k' && piece.type === 'r' && piece.color === selPiece.color) {
+          const castleDest = ((sq[0] === 'h' ? 'g' : 'c') + sq[1]) as Square
+          if (dests.has(castleDest)) {
+            onMove(selected, castleDest)
+            setSelected(null)
+            setDests(new Set())
+            return
+          }
+        }
         selectSquare(sq)
       } else {
         setSelected(null)
@@ -238,8 +255,8 @@ export default function ChessBoard({
               if (isLast)  bg = light ? '#cdd16f' : '#aaa23a'
               if (isSel)   bg = '#f6f669'
               // Premove highlights (override last-move, but not selected)
-              if (isPMSrc || isPMDst) bg = light ? '#6ec6e8' : '#3a9ec0'
-              if (isPMSel)            bg = light ? '#90d8f4' : '#58b8e0'
+              if (isPMSrc || isPMDst) bg = light ? '#f4a0a0' : '#c05858'
+              if (isPMSel)            bg = light ? '#f8c8c8' : '#e07070'
 
               return (
                 <div

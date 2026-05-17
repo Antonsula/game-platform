@@ -234,7 +234,7 @@ export default function ChessGame({ config, onMenu: _onMenu, onBack: _onBack }: 
   function handleMove(from: Square, to: Square, promotion?: PieceSymbol) {
     if (gameOver) return
     try {
-      chess.move({ from, to, promotion: promotion ?? 'q' })
+      chess.move({ from, to, ...(promotion ? { promotion } : {}) })
       const movedColor: Color = chess.turn() === 'w' ? 'b' : 'w'
       addIncrement(movedColor)
       setLastMove({ from, to })
@@ -273,12 +273,12 @@ export default function ChessGame({ config, onMenu: _onMenu, onBack: _onBack }: 
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [fen, restartKey])
 
-  // ── Premove execution (vs-ai only) ────────────────────────────────────────
+  // ── Pre-move execution (vs-ai and LAN) ───────────────────────────────────
   useEffect(() => {
     if (!premove) return
     if (thinking) return
     if (gameOver) return
-    if (config.mode !== 'vs-ai') return
+    if (chess.isGameOver()) return            // guard: opponent may have just won
     if (chess.turn() !== config.humanColor) return
 
     const pm = premove
@@ -291,8 +291,11 @@ export default function ChessGame({ config, onMenu: _onMenu, onBack: _onBack }: 
       setLastMove({ from: pm.from, to: pm.to })
       bump()
       detectGameOver()
+      if (isLan) {
+        window.api.net.send({ type: 'chess:move', from: pm.from, to: pm.to, promotion: 'q' })
+      }
     } catch {
-      setPremoveMsg('Premove was illegal — discarded')
+      setPremoveMsg('Pre-move was illegal — discarded')
       setTimeout(() => setPremoveMsg(null), 2500)
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -412,7 +415,7 @@ export default function ChessGame({ config, onMenu: _onMenu, onBack: _onBack }: 
             onMove={handleMove}
             cellSize={cellSize}
             showLastMove={showLastMove}
-            premovesEnabled={config.mode === 'vs-ai'}
+            premovesEnabled={config.mode === 'vs-ai' || isLan}
             premove={premove}
             onPremoveChange={setPremove}
             humanColor={config.humanColor}
@@ -455,17 +458,17 @@ export default function ChessGame({ config, onMenu: _onMenu, onBack: _onBack }: 
           </div>
 
           {/* Premove status */}
-          {config.mode === 'vs-ai' && (
+          {(config.mode === 'vs-ai' || isLan) && (
             <div className="space-y-1.5">
               {premove && (
-                <div className="flex items-center gap-2 bg-cyan-900/30 border border-cyan-500/30 rounded-lg px-3 py-1.5">
-                  <span className="text-cyan-300 text-xs flex-1">
-                    Premove: {premove.from} → {premove.to}
+                <div className="flex items-center gap-2 bg-red-900/30 border border-red-500/30 rounded-lg px-3 py-1.5">
+                  <span className="text-red-300 text-xs flex-1">
+                    Pre-move: {premove.from} → {premove.to}
                   </span>
                   <button
                     onClick={() => setPremove(null)}
-                    className="text-cyan-500 hover:text-white text-xs transition-colors"
-                    title="Cancel premove"
+                    className="text-red-400 hover:text-white text-xs transition-colors"
+                    title="Cancel pre-move"
                   >
                     ✕
                   </button>
@@ -477,7 +480,7 @@ export default function ChessGame({ config, onMenu: _onMenu, onBack: _onBack }: 
                 </div>
               )}
               {!premove && !premoveMsg && !humanTurn && !gameOver && (
-                <p className="text-xs text-gray-600 text-center">Click a square to premove</p>
+                <p className="text-xs text-gray-600 text-center">Click a piece to pre-move</p>
               )}
             </div>
           )}
