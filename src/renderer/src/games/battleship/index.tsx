@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useRef } from 'react'
 import BattleshipMenu    from './BattleshipMenu'
 import ShipPlacement     from './ShipPlacement'
 import TurnTransition    from './TurnTransition'
@@ -34,11 +34,11 @@ export default function BattleshipIndex({ onBack }: Props) {
   const [phase,   setPhase]   = useState<Phase>({ name: 'menu' })
   const [overlay, setOverlay] = useState<TurnOverlay | null>(null)
 
-  // NOTE: board-exchange listeners are registered in handleLanPlaced (see below),
-  // not in a useEffect. This avoids a race condition where the peer sends their
-  // board while we are still in 'lan-place' phase (before any useEffect for
-  // 'lan-waiting' has run). Event handlers are never double-invoked by React
-  // StrictMode, so registering there is safe.
+  // Buffer for a peer board that arrives while we are still placing ships.
+  // The peer may click Ready and send battle:board before we do — we must not
+  // miss that message. We register the listener the moment the LAN connection
+  // is established (handleLanStart) and store whatever arrives here.
+  const pendingPeerBoardRef = useRef<{ board: Board; peerName: string } | null>(null)
 
   // ── Local helpers ─────────────────────────────────────────────────────────
   function startPlacement(mode: '1p' | '2p', p1Name: string, p2Name: string) {
@@ -75,7 +75,23 @@ export default function BattleshipIndex({ onBack }: Props) {
   }
 
   // ── LAN helpers ───────────────────────────────────────────────────────────
+
+  // Called the moment both machines are connected (from LanLobby's onConnected).
+  // We register the board-exchange listener RIGHT NOW so we never miss the peer's
+  // board even if they finish placing ships before we do.
   function handleLanStart(role: 'host' | 'join', myName: string) {
+    pendingPeerBoardRef.current = null
+    window.api.net.offAll()
+    window.api.net.onMessage((msg: any) => {
+      if (msg.type === 'battle:board') {
+        // Buffer it — handleLanPlaced will pick it up when the local player is done
+        pendingPeerBoardRef.current = { board: msg.board as Board, peerName: msg.playerName as string }
+      }
+    })
+    window.api.net.onDisconnect(() => {
+      window.api.net.offAll()
+      setPhase({ name: 'menu' })
+    })
     setPhase({ name: 'lan-place', role, myName })
   }
 
@@ -83,9 +99,19 @@ export default function BattleshipIndex({ onBack }: Props) {
     const p = phase as Extract<Phase, { name: 'lan-place' }>
     const { role, myName } = p
 
-    // Register the listener BEFORE sending our board.
-    // If the peer clicked Ready first, their board message may arrive the moment
-    // we send ours — registering first ensures we never miss it.
+    // Send our board to the peer
+    window.api.net.send({ type: 'battle:board', board, playerName: myName })
+
+    // Did the peer's board already arrive while we were placing? Use the buffer.
+    if (pendingPeerBoardRef.current) {
+      const { board: peerBoard, peerName } = pendingPeerBoardRef.current
+      pendingPeerBoardRef.current = null
+      window.api.net.offAll()
+      setPhase({ name: 'lan-playing', role, myName, peerName, myBoard: board, peerBoard, gameKey: 0 })
+      return
+    }
+
+    // Not yet — re-register listener with the now-known local board in its closure
     window.api.net.offAll()
     window.api.net.onMessage((msg: any) => {
       if (msg.type !== 'battle:board') return
@@ -98,9 +124,6 @@ export default function BattleshipIndex({ onBack }: Props) {
       window.api.net.offAll()
       setPhase({ name: 'menu' })
     })
-
-    // Now send our board and show the waiting screen
-    window.api.net.send({ type: 'battle:board', board, playerName: myName })
     setPhase({ name: 'lan-waiting', role, myName, myBoard: board })
   }
 
