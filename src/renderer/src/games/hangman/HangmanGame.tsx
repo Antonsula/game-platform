@@ -82,105 +82,59 @@ export default function HangmanGame({ word, wordLength, mode, playerName, oppone
 
   const processGuess = useCallback((letter: string) => {
     if (gameState !== 'playing') return
+    if (guessedLetters.has(letter)) return
 
-    setGuessedLetters(prev => {
-      if (prev.has(letter)) return prev
-      const next = new Set(prev)
-      next.add(letter)
+    // Update guessed set
+    setGuessedLetters(new Set([...guessedLetters, letter]))
 
-      if (mode === 'lan-join') {
-        window.api.net.send({ type: 'hangman:guess', letter })
-        return next
+    if (mode === 'lan-join') {
+      window.api.net.send({ type: 'hangman:guess', letter })
+      return
+    }
+
+    // Find matching positions
+    const positions: number[] = []
+    for (let i = 0; i < word.length; i++) {
+      if (word[i].toLowerCase() === letter.toLowerCase()) {
+        positions.push(i)
       }
+    }
 
-      // Find matching positions
-      const positions: number[] = []
-      for (let i = 0; i < word.length; i++) {
-        if (word[i].toLowerCase() === letter.toLowerCase()) {
-          positions.push(i)
+    if (positions.length > 0) {
+      // Correct guess — apply reveals
+      const updatedDisplay = [...displayWord]
+      positions.forEach(i => { updatedDisplay[i] = word[i].toUpperCase() })
+      setDisplayWord(updatedDisplay)
+      setLastRevealedIndices(positions)
+
+      const wonNow = updatedDisplay.every(c => c !== '_')
+      if (wonNow) {
+        if (mode === 'lan-host') {
+          window.api.net.send({ type: 'hangman:result', letter, positions, wrongCount, won: true, lost: false, word })
         }
+        setGameState('won')
+        setParticles(spawnConfetti())
+      } else if (mode === 'lan-host') {
+        window.api.net.send({ type: 'hangman:result', letter, positions, wrongCount, won: false, lost: false, word: '' })
       }
+    } else {
+      // Wrong guess — increment count once, flat
+      const newWrong = wrongCount + 1
+      setWrongCount(newWrong)
+      setWrongFlash(true)
+      setTimeout(() => setWrongFlash(false), 700)
 
-      if (positions.length > 0) {
-        // Correct guess
-        setDisplayWord(prev => {
-          const updated = [...prev]
-          positions.forEach(i => { updated[i] = word[i].toUpperCase() })
-          return updated
-        })
-        setLastRevealedIndices(positions)
-
-        // Check win
-        setDisplayWord(current => {
-          const updated = [...current]
-          positions.forEach(i => { updated[i] = word[i].toUpperCase() })
-          const wonNow = updated.every(c => c !== '_')
-          if (wonNow) {
-            const finalWord = word
-            if (mode === 'lan-host') {
-              window.api.net.send({
-                type: 'hangman:result',
-                letter,
-                positions,
-                wrongCount: wrongCount,
-                won: true,
-                lost: false,
-                word: finalWord,
-              })
-            }
-            setGameState('won')
-            setParticles(spawnConfetti())
-          } else if (mode === 'lan-host') {
-            window.api.net.send({
-              type: 'hangman:result',
-              letter,
-              positions,
-              wrongCount: wrongCount,
-              won: false,
-              lost: false,
-              word: '',
-            })
-          }
-          return updated
-        })
-      } else {
-        // Wrong guess
-        setWrongCount(prev => {
-          const newWrong = prev + 1
-          const lostNow = newWrong >= MAX_WRONG
-          if (lostNow) {
-            if (mode === 'lan-host') {
-              window.api.net.send({
-                type: 'hangman:result',
-                letter,
-                positions: [],
-                wrongCount: newWrong,
-                won: false,
-                lost: true,
-                word: word,
-              })
-            }
-            setGameState('lost')
-          } else if (mode === 'lan-host') {
-            window.api.net.send({
-              type: 'hangman:result',
-              letter,
-              positions: [],
-              wrongCount: newWrong,
-              won: false,
-              lost: false,
-              word: '',
-            })
-          }
-          return newWrong
-        })
-        setWrongFlash(true)
-        setTimeout(() => setWrongFlash(false), 700)
+      const lostNow = newWrong >= MAX_WRONG
+      if (lostNow) {
+        if (mode === 'lan-host') {
+          window.api.net.send({ type: 'hangman:result', letter, positions: [], wrongCount: newWrong, won: false, lost: true, word })
+        }
+        setGameState('lost')
+      } else if (mode === 'lan-host') {
+        window.api.net.send({ type: 'hangman:result', letter, positions: [], wrongCount: newWrong, won: false, lost: false, word: '' })
       }
-
-      return next
-    })
-  }, [gameState, mode, word, wrongCount])
+    }
+  }, [gameState, guessedLetters, displayWord, wrongCount, mode, word])
 
   // Keep ref in sync with latest processGuess
   useEffect(() => {
