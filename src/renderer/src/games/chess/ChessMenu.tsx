@@ -9,19 +9,21 @@ interface Props {
 }
 
 export default function ChessMenu({ onStart, onBack }: Props) {
-  const [mode,        setMode]       = useState<ChessGameMode>('vs-ai')
-  const [showLobby,   setShowLobby]  = useState(false)
-  const [playerName,  setPlayerName] = useState('Player')
-  const [whiteName,   setWhiteName]  = useState('White')
-  const [blackName,   setBlackName]  = useState('Black')
-  const [lanName,     setLanName]    = useState('Player')
-  const [humanColor,  setHumanColor] = useState<ChessPieceColor>('w')
-  const [difficulty,  setDifficulty] = useState<ChessDifficulty>('medium')
-  const [timeControl, setTimeControl] = useState<TimeControl>(TIME_PRESETS[0].value)
+  const [mode,               setMode]               = useState<ChessGameMode>('vs-ai')
+  const [showLobby,          setShowLobby]          = useState(false)
+  const [waitingForConfig,   setWaitingForConfig]   = useState(false)
+  const [playerName,         setPlayerName]         = useState('Player')
+  const [whiteName,          setWhiteName]          = useState('White')
+  const [blackName,          setBlackName]          = useState('Black')
+  const [lanName,            setLanName]            = useState('Player')
+  const [humanColor,         setHumanColor]         = useState<ChessPieceColor>('w')
+  const [difficulty,         setDifficulty]         = useState<ChessDifficulty>('medium')
+  const [timeControl,        setTimeControl]        = useState<TimeControl>(TIME_PRESETS[0].value)
 
   function handleModeChange(m: ChessGameMode) {
     setMode(m)
     setShowLobby(false)
+    setWaitingForConfig(false)
   }
 
   function handleStart() {
@@ -50,15 +52,46 @@ export default function ChessMenu({ onStart, onBack }: Props) {
   function handleLanConnected(role: 'host' | 'join') {
     const name  = lanName.trim() || 'Player'
     const color: ChessPieceColor = role === 'host' ? 'w' : 'b'
-    onStart({
-      mode:       'lan',
-      whiteName:  role === 'host' ? name : 'Opponent',
-      blackName:  role === 'join' ? name : 'Opponent',
-      humanColor: color,
-      difficulty: 'medium',   // unused in LAN
-      timeControl,
-      lanRole:    role,
-    })
+
+    if (role === 'host') {
+      // Host is authoritative — broadcast our time control to the joiner first,
+      // then start immediately with our own settings.
+      window.api.net.send({ type: 'chess:config', timeControl })
+      onStart({
+        mode:       'lan',
+        whiteName:  name,
+        blackName:  'Opponent',
+        humanColor: color,
+        difficulty: 'medium',
+        timeControl,
+        lanRole:    role,
+      })
+    } else {
+      // Joiner: close the lobby UI and wait for the host's config message.
+      // The host sends it immediately after connecting, so this is very brief.
+      setShowLobby(false)
+      setWaitingForConfig(true)
+
+      window.api.net.onMessage((msg: any) => {
+        if (msg.type !== 'chess:config') return
+        window.api.net.offAll()
+        onStart({
+          mode:        'lan',
+          whiteName:   'Opponent',
+          blackName:   name,
+          humanColor:  color,
+          difficulty:  'medium',
+          timeControl: msg.timeControl as TimeControl,
+          lanRole:     role,
+        })
+      })
+
+      window.api.net.onDisconnect(() => {
+        window.api.net.offAll()
+        window.api.net.stop()
+        setWaitingForConfig(false)
+      })
+    }
   }
 
   const difficultyColors: Record<ChessDifficulty, string> = {
@@ -163,7 +196,7 @@ export default function ChessMenu({ onStart, onBack }: Props) {
         )}
 
         {/* LAN section */}
-        {mode === 'lan' && !showLobby && (
+        {mode === 'lan' && !showLobby && !waitingForConfig && (
           <div className="mb-6 space-y-3">
             <div>
               <label className="text-xs text-gray-400 font-medium uppercase tracking-wider block mb-1">
@@ -192,6 +225,26 @@ export default function ChessMenu({ onStart, onBack }: Props) {
               onConnected={handleLanConnected}
               onCancel={() => setShowLobby(false)}
             />
+          </div>
+        )}
+
+        {/* Joiner waiting for host's config */}
+        {mode === 'lan' && waitingForConfig && (
+          <div className="mb-6 bg-surface-600/50 rounded-xl p-4 border border-white/5 space-y-3 text-center">
+            <p className="text-gray-300 text-sm font-medium animate-pulse">
+              Waiting for host settings…
+            </p>
+            <p className="text-gray-500 text-xs">The host's time control will be used</p>
+            <button
+              onClick={() => {
+                window.api.net.offAll()
+                window.api.net.stop()
+                setWaitingForConfig(false)
+              }}
+              className="text-xs text-gray-500 hover:text-gray-300 transition-colors"
+            >
+              Cancel
+            </button>
           </div>
         )}
 
@@ -239,25 +292,32 @@ export default function ChessMenu({ onStart, onBack }: Props) {
           </div>
         )}
 
-        {/* Time control */}
-        <div className="mb-8">
-          <p className="text-xs text-gray-400 mb-2 font-medium uppercase tracking-wider">Time Control</p>
-          <div className="flex flex-wrap gap-2">
-            {TIME_PRESETS.map(preset => (
-              <button
-                key={preset.label}
-                onClick={() => setTimeControl(preset.value)}
-                className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-colors ${
-                  isTCSelected(preset.value)
-                    ? 'bg-accent text-white shadow-lg shadow-accent/30'
-                    : 'bg-surface-600 text-gray-400 hover:text-white'
-                }`}
-              >
-                {preset.label}
-              </button>
-            ))}
+        {/* Time control — host picks it in LAN; joiner's selection is overridden */}
+        {!waitingForConfig && (
+          <div className="mb-8">
+            <div className="flex items-center gap-2 mb-2">
+              <p className="text-xs text-gray-400 font-medium uppercase tracking-wider">Time Control</p>
+              {mode === 'lan' && (
+                <span className="text-xs text-gray-600">(host decides)</span>
+              )}
+            </div>
+            <div className="flex flex-wrap gap-2">
+              {TIME_PRESETS.map(preset => (
+                <button
+                  key={preset.label}
+                  onClick={() => setTimeControl(preset.value)}
+                  className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-colors ${
+                    isTCSelected(preset.value)
+                      ? 'bg-accent text-white shadow-lg shadow-accent/30'
+                      : 'bg-surface-600 text-gray-400 hover:text-white'
+                  }`}
+                >
+                  {preset.label}
+                </button>
+              ))}
+            </div>
           </div>
-        </div>
+        )}
 
         {mode !== 'lan' && (
           <button
@@ -269,7 +329,7 @@ export default function ChessMenu({ onStart, onBack }: Props) {
           </button>
         )}
 
-        {mode === 'lan' && !showLobby && (
+        {mode === 'lan' && !showLobby && !waitingForConfig && (
           <button
             onClick={() => setShowLobby(true)}
             disabled={!lanName.trim()}
@@ -282,7 +342,7 @@ export default function ChessMenu({ onStart, onBack }: Props) {
           </button>
         )}
 
-        {!showLobby && (
+        {!showLobby && !waitingForConfig && (
           <button
             onClick={onBack}
             className="w-full bg-surface-600 hover:bg-surface-500 py-2.5 rounded-xl text-gray-300
