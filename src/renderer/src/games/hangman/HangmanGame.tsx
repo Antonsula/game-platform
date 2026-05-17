@@ -59,6 +59,7 @@ export default function HangmanGame({ word, wordLength, mode, playerName, oppone
   const [lastRevealedIndices, setLastRevealedIndices] = useState<number[]>([])
   const [wrongFlash, setWrongFlash]         = useState(false)
   const [particles, setParticles]           = useState<Particle[]>([])
+  const [revealedWord, setRevealedWord]     = useState('')   // set for lan-join on loss
 
   // For resetting the reveal animation after it plays
   const revealTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
@@ -235,6 +236,7 @@ export default function HangmanGame({ word, wordLength, mode, playerName, oppone
       }
       if (lost) {
         setDisplayWord(revWord.toUpperCase().split(''))
+        setRevealedWord(revWord)
         setGameState('lost')
       }
     })
@@ -565,7 +567,7 @@ export default function HangmanGame({ word, wordLength, mode, playerName, oppone
                 The word was:
               </p>
             )}
-            {(gameState === 'lost' || gameState === 'won') && word && (
+            {(gameState === 'lost' || gameState === 'won') && (word || revealedWord) && (
               <div
                 className="font-mono text-xl font-bold tracking-widest mb-4 py-2 px-4
                   rounded-xl bg-surface-600 inline-block"
@@ -574,7 +576,7 @@ export default function HangmanGame({ word, wordLength, mode, playerName, oppone
                   animation: gameState === 'won' ? 'hg-win-glow 1.5s ease-in-out infinite' : undefined,
                 }}
               >
-                {word.toUpperCase()}
+                {(word || revealedWord).toUpperCase()}
               </div>
             )}
             {gameState === 'won' && mode === 'lan-host' && (
@@ -584,7 +586,7 @@ export default function HangmanGame({ word, wordLength, mode, playerName, oppone
             )}
             <div className="flex flex-col gap-3 mt-4">
               <button
-                onClick={() => onGameOver(gameState === 'won', word)}
+                onClick={() => onGameOver(gameState === 'won', word || revealedWord)}
                 className="w-full bg-accent hover:bg-accent-light py-3 rounded-xl
                   text-white font-bold text-sm transition-colors shadow-lg shadow-accent/20"
               >
