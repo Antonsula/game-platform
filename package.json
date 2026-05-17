@@ -10,8 +10,10 @@
     "preview": "electron-vite preview"
   },
   "dependencies": {
+    "@types/matter-js": "^0.20.2",
     "@types/ws": "^8.18.1",
     "chess.js": "^1.0.0",
+    "matter-js": "^0.20.0",
     "ws": "^8.20.1"
   },
   "devDependencies": {

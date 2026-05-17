@@ -1,0 +1,100 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 300 200">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#0d0a1a"/>
+      <stop offset="100%" stop-color="#0a0f1f"/>
+    </linearGradient>
+    <filter id="glow" x="-50%" y="-50%" width="200%" height="200%">
+      <feGaussianBlur stdDeviation="2.5" result="blur"/>
+      <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
+    </filter>
+    <filter id="glow2" x="-50%" y="-50%" width="200%" height="200%">
+      <feGaussianBlur stdDeviation="4" result="blur"/>
+      <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
+    </filter>
+    <radialGradient id="ball" cx="35%" cy="35%">
+      <stop offset="0%" stop-color="#ffffff"/>
+      <stop offset="100%" stop-color="#6b7280"/>
+    </radialGradient>
+  </defs>
+
+  <!-- Background -->
+  <rect width="300" height="200" fill="url(#bg)"/>
+
+  <!-- Table border -->
+  <rect x="40" y="10" width="160" height="180" rx="6" fill="none" stroke="#1e293b" stroke-width="2"/>
+
+  <!-- Lane dividers top -->
+  <line x1="75"  y1="15" x2="75"  y2="50" stroke="rgba(148,163,184,0.3)" stroke-width="2"/>
+  <line x1="100" y1="15" x2="100" y2="50" stroke="rgba(148,163,184,0.3)" stroke-width="2"/>
+  <line x1="125" y1="15" x2="125" y2="50" stroke="rgba(148,163,184,0.3)" stroke-width="2"/>
+  <line x1="150" y1="15" x2="150" y2="50" stroke="rgba(148,163,184,0.3)" stroke-width="2"/>
+  <line x1="175" y1="15" x2="175" y2="50" stroke="rgba(148,163,184,0.3)" stroke-width="2"/>
+
+  <!-- Lane indicators -->
+  <rect x="76"  y="52" width="23" height="6" rx="2" fill="#ff6b6b" filter="url(#glow)" opacity="0.9"/>
+  <rect x="101" y="52" width="23" height="6" rx="2" fill="#ffd93d" filter="url(#glow)" opacity="0.9"/>
+  <rect x="126" y="52" width="23" height="6" rx="2" fill="#6bcb77" filter="url(#glow)" opacity="0.7"/>
+  <rect x="151" y="52" width="23" height="6" rx="2" fill="#4d96ff" filter="url(#glow)" opacity="0.7"/>
+
+  <!-- Bumpers -->
+  <circle cx="100" cy="95"  r="14" fill="none" stroke="#22d3ee" stroke-width="2.5" filter="url(#glow2)" opacity="0.9"/>
+  <circle cx="140" cy="95"  r="14" fill="none" stroke="#22d3ee" stroke-width="2.5" filter="url(#glow2)" opacity="0.9"/>
+  <circle cx="120" cy="118" r="14" fill="none" stroke="#f97316" stroke-width="2.5" filter="url(#glow2)"/>
+  <circle cx="100" cy="95"  r="5"  fill="#22d3ee" opacity="0.6"/>
+  <circle cx="140" cy="95"  r="5"  fill="#22d3ee" opacity="0.6"/>
+  <circle cx="120" cy="118" r="5"  fill="#facc15" filter="url(#glow)"/>
+
+  <!-- JP label on jackpot bumper -->
+  <text x="120" y="122" text-anchor="middle" fill="#facc15" font-size="5" font-family="monospace" font-weight="bold">JP</text>
+
+  <!-- Left targets -->
+  <rect x="46" y="100" width="5" height="22" rx="1" fill="#fbbf24" filter="url(#glow)" opacity="0.8"/>
+  <rect x="46" y="126" width="5" height="22" rx="1" fill="#fbbf24" filter="url(#glow)" opacity="0.6"/>
+  <rect x="46" y="152" width="5" height="22" rx="1" fill="#fbbf24" opacity="0.3"/>
+
+  <!-- Right targets -->
+  <rect x="189" y="100" width="5" height="22" rx="1" fill="#f87171" filter="url(#glow)" opacity="0.8"/>
+  <rect x="189" y="126" width="5" height="22" rx="1" fill="#f87171" filter="url(#glow)" opacity="0.6"/>
+  <rect x="189" y="152" width="5" height="22" rx="1" fill="#f87171" opacity="0.3"/>
+
+  <!-- Ramp suggestions -->
+  <line x1="46" y1="168" x2="75"  y2="140" stroke="#6366f1" stroke-width="3" filter="url(#glow)" opacity="0.7"/>
+  <line x1="194" y1="168" x2="165" y2="140" stroke="#6366f1" stroke-width="3" filter="url(#glow)" opacity="0.7"/>
+
+  <!-- Angled guides -->
+  <line x1="46"  y1="168" x2="70"  y2="185" stroke="rgba(148,163,184,0.5)" stroke-width="2"/>
+  <line x1="194" y1="168" x2="170" y2="185" stroke="rgba(148,163,184,0.5)" stroke-width="2"/>
+
+  <!-- Flippers -->
+  <polygon points="70,187 110,183 110,189 70,191" fill="#f1f5f9" filter="url(#glow)" opacity="0.9"/>
+  <polygon points="170,183 170,189 130,187 130,191" fill="#f1f5f9" filter="url(#glow)" opacity="0.9"/>
+
+  <!-- Ball -->
+  <circle cx="154" cy="145" r="8" fill="url(#ball)" filter="url(#glow)"/>
+  <circle cx="151" cy="142" r="2.5" fill="white" opacity="0.7"/>
+
+  <!-- Plunger lane -->
+  <rect x="200" y="150" width="15" height="40" rx="2" fill="rgba(255,255,255,0.05)" stroke="rgba(148,163,184,0.2)" stroke-width="1"/>
+  <line x1="207" y1="155" x2="207" y2="185" stroke="#4ade80" stroke-width="3" stroke-linecap="round" filter="url(#glow)" opacity="0.8"/>
+
+  <!-- Score panel (right side) -->
+  <rect x="222" y="10" width="70" height="180" rx="6" fill="rgba(0,0,0,0.4)" stroke="rgba(255,255,255,0.05)" stroke-width="1"/>
+
+  <text x="257" y="35"  text-anchor="middle" fill="#6b7280" font-size="7" font-family="monospace" letter-spacing="1">SCORE</text>
+  <text x="257" y="52"  text-anchor="middle" fill="#facc15" font-size="11" font-family="monospace" font-weight="bold">125,400</text>
+
+  <text x="257" y="72"  text-anchor="middle" fill="#6b7280" font-size="7" font-family="monospace">MULTIPLIER</text>
+  <text x="257" y="86"  text-anchor="middle" fill="#f97316" font-size="14" font-family="monospace" font-weight="bold">x3</text>
+
+  <text x="257" y="106" text-anchor="middle" fill="#6b7280" font-size="7" font-family="monospace">BALL</text>
+  <circle cx="247" cy="118" r="4" fill="#ef4444"/>
+  <circle cx="257" cy="118" r="4" fill="#ef4444"/>
+  <circle cx="267" cy="118" r="4" fill="#374151"/>
+
+  <text x="257" y="140" text-anchor="middle" fill="#22d3ee" font-size="7" font-family="monospace" filter="url(#glow)">JACKPOT</text>
+  <text x="257" y="153" text-anchor="middle" fill="#22d3ee" font-size="8" font-family="monospace" font-weight="bold" filter="url(#glow)">LIT!</text>
+
+  <!-- Title -->
+  <text x="257" y="178" text-anchor="middle" fill="white" font-size="13" font-family="monospace" font-weight="bold" letter-spacing="2">PINBALL</text>
+</svg>

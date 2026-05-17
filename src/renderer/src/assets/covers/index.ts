@@ -3,6 +3,7 @@ import chessCover      from './chess.svg'
 import battleshipCover from './battleship.svg'
 import flappyCover     from './flappy.svg'
 import hangmanCover    from './hangman.svg'
+import pinballCover    from './pinball.svg'
 
 /** Maps builtin:// executable paths to their bundled cover image URLs. */
 export const BUILTIN_COVERS: Record<string, string> = {
@@ -11,4 +12,5 @@ export const BUILTIN_COVERS: Record<string, string> = {
   'builtin://battleship': battleshipCover,
   'builtin://flappy':     flappyCover,
   'builtin://hangman':    hangmanCover,
+  'builtin://pinball':    pinballCover,
 }

@@ -7,8 +7,9 @@ import BattleshipGame from './games/battleship/index'
 import ChessGame      from './games/chess/index'
 import FlappyGame     from './games/flappy/index'
 import HangmanGame    from './games/hangman/index'
+import PinballIndex   from './games/pinball/index'
 
-type View = 'library' | 'snake' | 'battleship' | 'chess' | 'flappy' | 'hangman'
+type View = 'library' | 'snake' | 'battleship' | 'chess' | 'flappy' | 'hangman' | 'pinball'
 
 export default function App() {
   const [activeView, setActiveView] = useState<View>('library')
@@ -19,6 +20,7 @@ export default function App() {
     if (builtInId === 'chess')      setActiveView('chess')
     if (builtInId === 'flappy')     setActiveView('flappy')
     if (builtInId === 'hangman')    setActiveView('hangman')
+    if (builtInId === 'pinball')    setActiveView('pinball')
   }
 
   return (
@@ -44,6 +46,9 @@ export default function App() {
           )}
           {activeView === 'hangman' && (
             <HangmanGame onBack={() => setActiveView('library')} />
+          )}
+          {activeView === 'pinball' && (
+            <PinballIndex onBack={() => setActiveView('library')} />
           )}
         </main>
       </div>

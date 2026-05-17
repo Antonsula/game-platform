@@ -255,6 +255,26 @@ function seedBuiltInGames(): void {
     changed = true
   }
 
+  if (!games.some(g => g.executablePath === 'builtin://pinball')) {
+    const pinball: Game = {
+      id:             'builtin-pinball',
+      title:          'Pinball',
+      description:    'Classic pinball with bumpers, ramps, multiball, jackpots and a persistent high score leaderboard.',
+      executablePath: 'builtin://pinball',
+      genre:          'Arcade',
+      coverPath:      '',
+      addedAt:        new Date().toISOString(),
+      lastPlayed:     null,
+    }
+    const hangmanIdx = games.findIndex(g => g.executablePath === 'builtin://hangman')
+    if (hangmanIdx >= 0) {
+      games = [...games.slice(0, hangmanIdx + 1), pinball, ...games.slice(hangmanIdx + 1)]
+    } else {
+      games = [...games, pinball]
+    }
+    changed = true
+  }
+
   if (changed) writeGames(games)
 }
 
